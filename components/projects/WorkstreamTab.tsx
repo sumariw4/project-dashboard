@@ -1,7 +1,25 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { CaretDown, DotsThreeOutline, Plus } from "@phosphor-icons/react/dist/ssr"
+import { CaretDown, DotsSixVertical, Plus } from "@phosphor-icons/react/dist/ssr"
+import {
+  DndContext,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+  DragOverlay,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 import type { WorkstreamGroup, WorkstreamTask } from "@/lib/data/project-details"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -9,6 +27,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { ProgressCircle } from "@/components/progress-circle"
 import { cn } from "@/lib/utils"
 
 type WorkstreamTabProps = {
@@ -20,8 +39,27 @@ export function WorkstreamTab({ workstreams }: WorkstreamTabProps) {
   const [openValues, setOpenValues] = useState<string[]>(() =>
     workstreams && workstreams.length ? [workstreams[0].id] : [],
   )
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+  const [overTaskId, setOverTaskId] = useState<string | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+  )
 
   const allIds = useMemo(() => state.map((group) => group.id), [state])
+
+  const findTaskById = (taskId: string | null): WorkstreamTask | null => {
+    if (!taskId) return null
+    for (const group of state) {
+      const found = group.tasks.find((task) => task.id === taskId)
+      if (found) return found
+    }
+    return null
+  }
+
+  const activeTask = findTaskById(activeTaskId)
 
   const toggleTask = (groupId: string, taskId: string) => {
     setState((prev) =>
@@ -43,6 +81,86 @@ export function WorkstreamTab({ workstreams }: WorkstreamTabProps) {
     )
   }
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const id = event.active.id
+    if (typeof id === "string") {
+      setActiveTaskId(id)
+    }
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const overId = event.over?.id
+    if (typeof overId === "string") {
+      setOverTaskId(overId)
+    } else {
+      setOverTaskId(null)
+    }
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveTaskId(null)
+    setOverTaskId(null)
+
+    if (!over) return
+    if (active.id === over.id) return
+
+    const activeId = String(active.id)
+    const overId = String(over.id)
+
+    setState((prev) => {
+      let sourceGroupIndex = -1
+      let sourceTaskIndex = -1
+      let targetGroupIndex = -1
+      let targetTaskIndex = -1
+
+      prev.forEach((group, groupIndex) => {
+        const aIndex = group.tasks.findIndex((task) => task.id === activeId)
+        if (aIndex !== -1) {
+          sourceGroupIndex = groupIndex
+          sourceTaskIndex = aIndex
+        }
+
+        const oIndex = group.tasks.findIndex((task) => task.id === overId)
+        if (oIndex !== -1) {
+          targetGroupIndex = groupIndex
+          targetTaskIndex = oIndex
+        }
+      })
+
+      if (sourceGroupIndex === -1 || targetGroupIndex === -1) return prev
+
+      const next = [...prev]
+      const sourceGroup = next[sourceGroupIndex]
+      const targetGroup = next[targetGroupIndex]
+
+      // Reorder within the same workstream
+      if (sourceGroupIndex === targetGroupIndex) {
+        const reordered = arrayMove(sourceGroup.tasks, sourceTaskIndex, targetTaskIndex)
+        next[sourceGroupIndex] = { ...sourceGroup, tasks: reordered }
+        return next
+      }
+
+      // Move across workstreams
+      const sourceTasks = [...sourceGroup.tasks]
+      const [moved] = sourceTasks.splice(sourceTaskIndex, 1)
+      if (!moved) return prev
+
+      const targetTasks = [...targetGroup.tasks]
+      targetTasks.splice(targetTaskIndex, 0, moved)
+
+      next[sourceGroupIndex] = { ...sourceGroup, tasks: sourceTasks }
+      next[targetGroupIndex] = { ...targetGroup, tasks: targetTasks }
+
+      return next
+    })
+  }
+
+  const handleDragCancel = () => {
+    setActiveTaskId(null)
+    setOverTaskId(null)
+  }
+
   if (!state.length) {
     return (
       <section>
@@ -57,8 +175,8 @@ export function WorkstreamTab({ workstreams }: WorkstreamTabProps) {
   }
 
   return (
-    <section>
-      <div className="flex items-center justify-between gap-3">
+    <section className="rounded-2xl border border-border bg-muted shadow-[var(--shadow-workstream)] p-3 space-y-3">
+      <div className="flex items-center justify-between gap-3 px-2">
         <h2 className="text-sm font-semibold tracking-normal text-foreground uppercase">
           WORKSTEAM BREAKDOWN
         </h2>
@@ -66,7 +184,7 @@ export function WorkstreamTab({ workstreams }: WorkstreamTabProps) {
           <Button
             variant="ghost"
             size="icon-sm"
-            className="rounded-lg"
+            className="rounded-lg hover:cursor-pointer"
             aria-label="Collapse all"
             onClick={() => setOpenValues([])}
             disabled={!allIds.length}
@@ -76,7 +194,7 @@ export function WorkstreamTab({ workstreams }: WorkstreamTabProps) {
           <Button
             variant="ghost"
             size="icon-sm"
-            className="rounded-lg"
+            className="rounded-lg hover:cursor-pointer"
             aria-label="Expand all"
             onClick={() => setOpenValues(allIds)}
             disabled={!allIds.length}
@@ -86,55 +204,83 @@ export function WorkstreamTab({ workstreams }: WorkstreamTabProps) {
         </div>
       </div>
 
-      <div className="mt-3 rounded-2xl border border-border bg-muted/60 p-2">
-        <Accordion
-          type="multiple"
-          value={openValues}
-          onValueChange={(values) =>
-            setOpenValues(Array.isArray(values) ? values : values ? [values] : [])
-          }
+      <div className="px-1">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
-          {state.map((group) => (
-            <AccordionItem
-              key={group.id}
-              value={group.id}
-              className="mb-2 overflow-hidden rounded-xl border border-border bg-background last:mb-0"
-            >
-              <AccordionTrigger className="border-b border-border bg-background">
-                <div className="flex flex-1 items-center gap-3">
-                  <CaretDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                  <span className="flex-1 truncate text-left text-sm font-medium text-foreground">
-                    {group.name}
-                  </span>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Button asChild size="icon-sm" variant="ghost" className="size-6 rounded-md">
-                      <span
-                        role="button"
-                        aria-label="Add task"
-                        onClick={(event) => {
-                          // Prevent toggling the accordion when clicking the add icon.
-                          event.stopPropagation()
-                        }}
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </span>
-                    </Button>
-                    <Separator orientation="vertical" className="h-4" />
-                    <GroupSummary group={group} />
+          <Accordion
+            type="multiple"
+            value={openValues}
+            onValueChange={(values) =>
+              setOpenValues(Array.isArray(values) ? values : values ? [values] : [])
+            }
+          >
+            {state.map((group) => (
+              <AccordionItem
+                key={group.id}
+                value={group.id}
+                className="mb-2 overflow-hidden rounded-xl border border-border bg-background last:mb-0"
+              >
+                <AccordionTrigger className="bg-background">
+                  <div className="flex flex-1 items-center gap-3">
+                    <CaretDown className="h-4 w-4 text-muted-foreground hover:cursor-pointer" aria-hidden="true" />
+                    <span className="flex-1 truncate text-left text-sm font-medium text-foreground hover:cursor-pointer">
+                      {group.name}
+                    </span>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Button asChild size="icon-sm" variant="ghost" className="size-6 rounded-md">
+                        <span
+                          role="button"
+                          aria-label="Add task"
+                          onClick={(event) => {
+                            // Prevent toggling the accordion when clicking the add icon.
+                            event.stopPropagation()
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </span>
+                      </Button>
+                      <Separator orientation="vertical" className="h-4" />
+                      <GroupSummary group={group} />
+                    </div>
                   </div>
-                </div>
-              </AccordionTrigger>
+                </AccordionTrigger>
 
-              <AccordionContent className="bg-background/60">
-                <div className="space-y-1 py-2">
-                  {group.tasks.map((task) => (
-                    <TaskRow key={task.id} task={task} onToggle={() => toggleTask(group.id, task.id)} />
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+                <AccordionContent className="border-t border-border bg-background/60 px-1.5">
+                  <SortableContext
+                    items={group.tasks.map((task) => task.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-1 py-2">
+                      {group.tasks.map((task) => (
+                        <TaskRow
+                          key={task.id}
+                          task={task}
+                          onToggle={() => toggleTask(group.id, task.id)}
+                          activeTaskId={activeTaskId}
+                          overTaskId={overTaskId}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+
+          <DragOverlay>
+            {activeTask ? (
+              <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm bg-background shadow-md">
+                <span className="flex-1 truncate text-left">{activeTask.name}</span>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </div>
     </section>
   )
@@ -147,70 +293,102 @@ type GroupSummaryProps = {
 function GroupSummary({ group }: GroupSummaryProps) {
   const total = group.tasks.length
   const done = group.tasks.filter((t) => t.status === "done").length
+  const percent = total ? Math.round((done / total) * 100) : 0
+  const color = getWorkstreamProgressColor(percent)
 
   return (
     <div className="flex items-center gap-2">
       <span className="text-xs text-muted-foreground">
         {done}/{total}
       </span>
-      <div className="relative flex h-4 w-4 items-center justify-center rounded-full border border-border/70 bg-muted">
-        <div
-          className="h-3 w-3 rounded-full bg-primary/70"
-          style={{ clipPath: `inset(${100 - (total ? (done / total) * 100 : 0)}% 0 0 0)` }}
-        />
-      </div>
+      <ProgressCircle progress={percent} color={color} size={18} />
     </div>
   )
+}
+
+function getWorkstreamProgressColor(percent: number): string {
+  if (percent >= 80) return "var(--chart-3)"
+  if (percent >= 50) return "var(--chart-4)"
+  if (percent > 0) return "var(--chart-5)"
+  return "var(--chart-2)"
 }
 
 type TaskRowProps = {
   task: WorkstreamTask
   onToggle: () => void
+  activeTaskId: string | null
+  overTaskId: string | null
 }
 
-function TaskRow({ task, onToggle }: TaskRowProps) {
+function TaskRow({ task, onToggle, activeTaskId, overTaskId }: TaskRowProps) {
   const isDone = task.status === "done"
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
+    id: task.id,
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  const showDropLine = !isDragging && (isOver || overTaskId === task.id)
+
   return (
-    <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted/60">
-      <Checkbox checked={isDone} onCheckedChange={onToggle} aria-label={task.name} />
-      <span
+    <div ref={setNodeRef} style={style} className="space-y-1">
+      {showDropLine && <div className="h-px w-full rounded-full bg-primary" />}
+      <div
         className={cn(
-          "flex-1 truncate text-left",
-          isDone && "line-through text-muted-foreground",
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted/60",
+          isDragging && "opacity-60",
         )}
       >
-        {task.name}
-      </span>
-      <div className="flex items-center gap-3 text-xs">
-        {task.dueLabel && (
-          <span
-            className={cn(
-              "text-muted-foreground",
-              task.dueTone === "danger" && "text-red-500",
-              task.dueTone === "warning" && "text-amber-500",
-            )}
-          >
-            {task.dueLabel}
-          </span>
-        )}
-        {task.assignee && (
-          <Avatar className="size-7">
-            {task.assignee.avatarUrl && (
-              <AvatarImage src={task.assignee.avatarUrl} alt={task.assignee.name} />
-            )}
-            <AvatarFallback>{task.assignee.name.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
-        )}
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          className="size-7 rounded-md text-muted-foreground"
-          aria-label="More actions"
+        <Checkbox
+          checked={isDone}
+          onCheckedChange={onToggle}
+          aria-label={task.name}
+          className="rounded-full border-border bg-background data-[state=checked]:border-teal-600 data-[state=checked]:bg-teal-600 hover:cursor-pointer"
+        />
+        <span
+          className={cn(
+            "flex-1 truncate text-left",
+            isDone && "line-through text-muted-foreground",
+          )}
         >
-          <DotsThreeOutline className="h-4 w-4" weight="bold" />
-        </Button>
+          {task.name}
+        </span>
+        <div className="flex items-center gap-3 text-xs">
+          {task.dueLabel && (
+            <span
+              className={cn(
+                "text-muted-foreground",
+                task.dueTone === "danger" && "text-red-500",
+                task.dueTone === "warning" && "text-amber-500",
+              )}
+            >
+              {task.dueLabel}
+            </span>
+          )}
+          {task.assignee && (
+            <Avatar className="size-6">
+              {task.assignee.avatarUrl && (
+                <AvatarImage src={task.assignee.avatarUrl} alt={task.assignee.name} />
+              )}
+              <AvatarFallback>{task.assignee.name.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+          )}
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="ghost"
+            className="size-7 rounded-md text-muted-foreground cursor-grab active:cursor-grabbing"
+            aria-label="Reorder task"
+            {...attributes}
+            {...listeners}
+          >
+            <DotsSixVertical className="h-4 w-4" weight="regular" />
+          </Button>
+        </div>
       </div>
     </div>
   )
