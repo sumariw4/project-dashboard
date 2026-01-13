@@ -98,7 +98,7 @@ interface PickerProps<T> {
   renderItem: (item: T, isSelected: boolean) => React.ReactNode;
 }
 
-function GenericPicker<
+export function GenericPicker<
   T extends { id: string; label?: string; name?: string },
 >({
   trigger,
@@ -146,7 +146,7 @@ interface DatePickerProps {
   trigger: React.ReactNode;
 }
 
-function DatePicker({
+export function DatePicker({
   date,
   onSelect,
   trigger,

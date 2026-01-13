@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { format } from "date-fns"
 import { ChartBar, DotsSixVertical, FolderSimple, Plus, Sparkle } from "@phosphor-icons/react/dist/ssr"
 import {
   DndContext,
@@ -28,6 +29,7 @@ import { FilterPopover } from "@/components/filter-popover"
 import { ChipOverflow } from "@/components/chip-overflow"
 import { ViewOptionsPopover } from "@/components/view-options-popover"
 import { cn } from "@/lib/utils"
+import { TaskQuickCreateModal, type CreateTaskContext } from "@/components/tasks/TaskQuickCreateModal"
 
 type ProjectTaskGroup = {
   project: Project
@@ -48,6 +50,9 @@ export function MyTasksPage() {
   const [filters, setFilters] = useState<FilterChipType[]>([{ key: "members", value: "jason" }])
   const [viewOptions, setViewOptions] = useState<ViewOptions>(DEFAULT_VIEW_OPTIONS)
 
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
+  const [createContext, setCreateContext] = useState<CreateTaskContext | undefined>(undefined)
+
   const counts = useMemo<FilterCounts>(() => {
     const allTasks = groups.flatMap((g) => g.tasks)
     return computeTaskFilterCounts(allTasks)
@@ -63,6 +68,38 @@ export function MyTasksPage() {
       }))
       .filter((group) => group.tasks.length > 0)
   }, [groups, filters])
+
+  const openCreateTask = (context?: CreateTaskContext) => {
+    setCreateContext(context)
+    setIsCreateTaskOpen(true)
+  }
+
+  const handleTaskCreated = (task: ProjectTask) => {
+    setGroups((prev) => {
+      const projectExists = prev.some((g) => g.project.id === task.projectId)
+      const project = projects.find((p) => p.id === task.projectId)
+
+      const ensureGroup = (current: ProjectTaskGroup[]): ProjectTaskGroup[] => {
+        if (projectExists || !project) return current
+        const details = getProjectDetailsById(project.id)
+        const existingTasks = getProjectTasks(details)
+        return [
+          { project, tasks: [...existingTasks, task] },
+          ...current,
+        ]
+      }
+
+      const next = prev.map((group) => {
+        if (group.project.id !== task.projectId) return group
+        return {
+          ...group,
+          tasks: [...group.tasks, task],
+        }
+      })
+
+      return ensureGroup(next)
+    })
+  }
 
   const toggleTask = (taskId: string) => {
     setGroups((prev) =>
@@ -140,7 +177,11 @@ export function MyTasksPage() {
             <p className="text-base font-medium text-foreground">Tasks</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="ghost">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => openCreateTask()}
+            >
               <Plus className="mr-1.5 h-4 w-4" />
               New Task
             </Button>
@@ -180,20 +221,62 @@ export function MyTasksPage() {
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           {visibleGroups.map((group) => (
-            <ProjectTasksSection key={group.project.id} group={group} onToggleTask={toggleTask} />
+            <ProjectTasksSection
+              key={group.project.id}
+              group={group}
+              onToggleTask={toggleTask}
+              onAddTask={(context) => openCreateTask(context)}
+            />
           ))}
         </DndContext>
       </div>
+
+      <TaskQuickCreateModal
+        open={isCreateTaskOpen}
+        onClose={() => setIsCreateTaskOpen(false)}
+        context={createContext}
+        onTaskCreated={handleTaskCreated}
+      />
     </div>
   )
+}
+
+type TaskPriorityProps = {
+  priority: NonNullable<ProjectTask["priority"]>
+}
+
+function TaskPriority({ priority }: TaskPriorityProps) {
+  const label = getPriorityLabel(priority)
+
+  return (
+    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+      {label}
+    </span>
+  )
+}
+
+function getPriorityLabel(priority: NonNullable<ProjectTask["priority"]>): string {
+  switch (priority) {
+    case "high":
+      return "High"
+    case "medium":
+      return "Medium"
+    case "low":
+      return "Low"
+    case "urgent":
+      return "Urgent"
+    default:
+      return "No priority"
+  }
 }
 
 type ProjectTasksSectionProps = {
   group: ProjectTaskGroup
   onToggleTask: (taskId: string) => void
+  onAddTask: (context: CreateTaskContext) => void
 }
 
-function ProjectTasksSection({ group, onToggleTask }: ProjectTasksSectionProps) {
+function ProjectTasksSection({ group, onToggleTask, onAddTask }: ProjectTasksSectionProps) {
   const { project, tasks } = group
   const total = tasks.length
   const done = tasks.filter((t) => t.status === "done").length
@@ -238,6 +321,12 @@ function ProjectTasksSection({ group, onToggleTask }: ProjectTasksSectionProps) 
             variant="ghost"
             className="size-7 rounded-full text-muted-foreground hover:bg-transparent"
             aria-label="Add task"
+            onClick={() =>
+              onAddTask({
+                projectId: project.id,
+                workstreamName: tasks[0]?.workstreamName,
+              })
+            }
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -375,6 +464,12 @@ function computeTaskFilterCounts(tasks: ProjectTask[]): FilterCounts {
   return counts
 }
 
+function getTaskDescriptionSnippet(task: ProjectTask): string {
+  if (!task.description) return ""
+  const plain = task.description.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+  return plain
+}
+
 type TaskRowDnDProps = {
   task: ProjectTask
   onToggle: () => void
@@ -400,11 +495,23 @@ function TaskRowDnD({ task, onToggle }: TaskRowDnDProps) {
         onCheckedChange={onToggle}
         titleAriaLabel={task.name}
         titleSuffix={<TaskBadges workstreamName={task.workstreamName} />}
+        subtitle={getTaskDescriptionSnippet(task)}
         meta={
           <>
             <TaskStatus status={task.status} />
+            {task.startDate && (
+              <span className="text-muted-foreground">
+                Start: {format(task.startDate, "dd/MM")}
+              </span>
+            )}
             {task.dueLabel && (
               <span className="text-muted-foreground">{task.dueLabel}</span>
+            )}
+            {task.priority && <TaskPriority priority={task.priority} />}
+            {task.tag && (
+              <Badge variant="outline" className="whitespace-nowrap text-[11px]">
+                {task.tag}
+              </Badge>
             )}
             {task.assignee && (
               <Avatar className="size-6">

@@ -44,6 +44,14 @@ export type WorkstreamTask = {
   dueLabel?: string
   dueTone?: "danger" | "warning" | "muted"
   assignee?: User
+  /** Optional start date for the task (used in task views). */
+  startDate?: Date
+  /** Optional priority identifier for the task. */
+  priority?: "no-priority" | "low" | "medium" | "high" | "urgent"
+  /** Optional tag label for the task (e.g. Feature, Bug). */
+  tag?: string
+  /** Optional short description used in task lists. */
+  description?: string
 }
 
 export type WorkstreamGroup = {

@@ -17,6 +17,7 @@ import { Plus, StarFour, ArrowsOutSimple } from "@phosphor-icons/react/dist/ssr"
   onFocusChange?: (isFocused: boolean) => void;
   placeholder?: string;
   className?: string;
+  showTemplates?: boolean;
  }
 
  export function ProjectDescriptionEditor({
@@ -26,6 +27,7 @@ import { Plus, StarFour, ArrowsOutSimple } from "@phosphor-icons/react/dist/ssr"
   onFocusChange,
   placeholder,
   className,
+  showTemplates = true,
  }: ProjectDescriptionEditorProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -41,6 +43,10 @@ import { Plus, StarFour, ArrowsOutSimple } from "@phosphor-icons/react/dist/ssr"
   useEffect(() => {
     onFocusChange?.(isFocused);
   }, [isFocused, onFocusChange]);
+
+  useEffect(() => {
+    onExpandChange?.(isExpanded);
+  }, [isExpanded, onExpandChange]);
 
   const defaultPlaceholder =
     placeholder ?? "Briefly describe the goal of this project/sprint...";
@@ -318,82 +324,86 @@ import { Plus, StarFour, ArrowsOutSimple } from "@phosphor-icons/react/dist/ssr"
           <div className="w-full overflow-hidden shrink-0 animate-in fade-in zoom-in-95 duration-200">
             <div className="h-px w-full bg-border my-2" />
             <div className="flex flex-wrap gap-2 items-center w-full">
-              {!existingSections.goal && (
-                <button
-                  type="button"
-                  onClick={() => handleInsertTemplate("goal")}
-                  className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
-                >
-                  <Plus className="size-3.5 text-muted-foreground" />
-                  <span className="font-medium text-foreground text-xs">
-                    Goal
-                  </span>
-                </button>
-              )}
+              {showTemplates && (
+                <>
+                  {!existingSections.goal && (
+                    <button
+                      type="button"
+                      onClick={() => handleInsertTemplate("goal")}
+                      className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
+                    >
+                      <Plus className="size-3.5 text-muted-foreground" />
+                      <span className="font-medium text-foreground text-xs">
+                        Goal
+                      </span>
+                    </button>
+                  )}
 
-              {!existingSections.scope && (
-                <button
-                  type="button"
-                  onClick={() => handleInsertTemplate("scope")}
-                  className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
-                >
-                  <Plus className="size-3.5 text-muted-foreground" />
-                  <span className="font-medium text-foreground text-xs">
-                    Scope
-                  </span>
-                </button>
-              )}
+                  {!existingSections.scope && (
+                    <button
+                      type="button"
+                      onClick={() => handleInsertTemplate("scope")}
+                      className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
+                    >
+                      <Plus className="size-3.5 text-muted-foreground" />
+                      <span className="font-medium text-foreground text-xs">
+                        Scope
+                      </span>
+                    </button>
+                  )}
 
-              {!existingSections.scope && (
-                <button
-                  type="button"
-                  onClick={() => handleInsertTemplate("inScope")}
-                  className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
-                >
-                  <Plus className="size-3.5 text-muted-foreground" />
-                  <span className="font-medium text-foreground text-xs">
-                    In scope
-                  </span>
-                </button>
-              )}
+                  {!existingSections.scope && (
+                    <button
+                      type="button"
+                      onClick={() => handleInsertTemplate("inScope")}
+                      className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
+                    >
+                      <Plus className="size-3.5 text-muted-foreground" />
+                      <span className="font-medium text-foreground text-xs">
+                        In scope
+                      </span>
+                    </button>
+                  )}
 
-              {!existingSections.outcomes && (
-                <button
-                  type="button"
-                  onClick={() => handleInsertTemplate("outcomes")}
-                  className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
-                >
-                  <Plus className="size-3.5 text-muted-foreground" />
-                  <span className="font-medium text-foreground text-xs">
-                    Outcomes
-                  </span>
-                </button>
-              )}
+                  {!existingSections.outcomes && (
+                    <button
+                      type="button"
+                      onClick={() => handleInsertTemplate("outcomes")}
+                      className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
+                    >
+                      <Plus className="size-3.5 text-muted-foreground" />
+                      <span className="font-medium text-foreground text-xs">
+                        Outcomes
+                      </span>
+                    </button>
+                  )}
 
-              {!existingSections.outScope && (
-                <button
-                  type="button"
-                  onClick={() => handleInsertTemplate("outScope")}
-                  className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
-                >
-                  <Plus className="size-3.5 text-muted-foreground" />
-                  <span className="font-medium text-foreground text-xs">
-                    Out of scope
-                  </span>
-                </button>
-              )}
+                  {!existingSections.outScope && (
+                    <button
+                      type="button"
+                      onClick={() => handleInsertTemplate("outScope")}
+                      className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
+                    >
+                      <Plus className="size-3.5 text-muted-foreground" />
+                      <span className="font-medium text-foreground text-xs">
+                        Out of scope
+                      </span>
+                    </button>
+                  )}
 
-              {!existingSections.feature && (
-                <button
-                  type="button"
-                  onClick={() => handleInsertTemplate("feature")}
-                  className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
-                >
-                  <Plus className="size-3.5 text-muted-foreground" />
-                  <span className="font-medium text-foreground text-xs">
-                    Key feature
-                  </span>
-                </button>
+                  {!existingSections.feature && (
+                    <button
+                      type="button"
+                      onClick={() => handleInsertTemplate("feature")}
+                      className="flex gap-1.5 items-center opacity-60 hover:opacity-100 hover:bg-muted/50 px-2 py-1 rounded transition-all"
+                    >
+                      <Plus className="size-3.5 text-muted-foreground" />
+                      <span className="font-medium text-foreground text-xs">
+                        Key feature
+                      </span>
+                    </button>
+                  )}
+                </>
               )}
 
               <div className="flex-1" />

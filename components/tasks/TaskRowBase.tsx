@@ -13,6 +13,7 @@ export type TaskRowBaseProps = {
   titleSuffix?: ReactNode
   meta?: ReactNode
   className?: string
+  subtitle?: ReactNode
 }
 
 export function TaskRowBase({
@@ -23,6 +24,7 @@ export function TaskRowBase({
   titleSuffix,
   meta,
   className,
+  subtitle,
 }: TaskRowBaseProps) {
   return (
     <div
@@ -49,6 +51,16 @@ export function TaskRowBase({
           </span>
           {titleSuffix}
         </div>
+        {subtitle && (
+          <div
+            className={cn(
+              "mt-0.5 text-xs text-muted-foreground truncate",
+              checked && "line-through opacity-70",
+            )}
+          >
+            {subtitle}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-3 text-xs">
         {meta}
