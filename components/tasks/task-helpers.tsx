@@ -159,13 +159,14 @@ export function ProjectTasksSection({ group, onToggleTask, onAddTask }: ProjectT
 
 export type TaskBadgesProps = {
   workstreamName?: string
+  className?: string
 }
 
-export function TaskBadges({ workstreamName }: TaskBadgesProps) {
+export function TaskBadges({ workstreamName, className }: TaskBadgesProps) {
   if (!workstreamName) return null
 
   return (
-    <Badge variant="muted" className="whitespace-nowrap text-[11px]">
+    <Badge variant="muted" className={cn("whitespace-nowrap text-[11px]", className)}>
       {workstreamName}
     </Badge>
   )
@@ -228,13 +229,14 @@ function capitalize(value: string): string {
 
 export type TaskPriorityProps = {
   priority: NonNullable<ProjectTask["priority"]>
+  className?: string
 }
 
-export function TaskPriority({ priority }: TaskPriorityProps) {
+export function TaskPriority({ priority, className }: TaskPriorityProps) {
   const label = getPriorityLabel(priority)
 
   return (
-    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+    <span className={cn("rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground", className)}>
       {label}
     </span>
   )
@@ -279,22 +281,22 @@ export function TaskRowDnD({ task, onToggle }: TaskRowDnDProps) {
         title={task.name}
         onCheckedChange={onToggle}
         titleAriaLabel={task.name}
-        titleSuffix={<TaskBadges workstreamName={task.workstreamName} />}
-        subtitle={getTaskDescriptionSnippet(task)}
+        titleSuffix={<TaskBadges workstreamName={task.workstreamName} className="hidden sm:inline" />}
+        subtitle={<div className="hidden sm:inline">{getTaskDescriptionSnippet(task)}</div>}
         meta={
           <>
             <TaskStatus status={task.status} />
             {task.startDate && (
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground hidden sm:inline">
                 Start: {format(task.startDate, "dd/MM")}
               </span>
             )}
             {task.dueLabel && (
-              <span className="text-muted-foreground">{task.dueLabel}</span>
+              <span className="text-muted-foreground hidden sm:inline">{task.dueLabel}</span>
             )}
-            {task.priority && <TaskPriority priority={task.priority} />}
+            {task.priority && <TaskPriority priority={task.priority} className="hidden sm:inline" />}
             {task.tag && (
-              <Badge variant="outline" className="whitespace-nowrap text-[11px]">
+              <Badge variant="outline" className="whitespace-nowrap text-[11px] hidden sm:inline">
                 {task.tag}
               </Badge>
             )}
