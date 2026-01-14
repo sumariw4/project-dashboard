@@ -104,16 +104,16 @@ export function ProjectTasksSection({ group, onToggleTask, onAddTask }: ProjectT
               <ChartBar className="h-3 w-3" weight="regular" />
               <span className="font-medium">{capitalize(project.priority)}</span>
             </span>
-            <div className="h-4 w-px bg-border/70" />
+            <div className="h-4 w-px bg-border/70 hidden sm:inline" />
             {project.typeLabel && project.durationLabel && (
               <>
-                <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
+                <span className="rounded-full bg-muted px-2 py-0.5 font-medium hidden sm:inline">
                   {project.typeLabel} {project.durationLabel}
                 </span>
-                <div className="h-4 w-px bg-border/70" />
+                <div className="h-4 w-px bg-border/70 hidden sm:inline" />
               </>
             )}
-            <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
+            <span className="rounded-full bg-muted px-2 py-0.5 font-medium hidden sm:inline">
               {getProjectStatusLabel(project.status)}
             </span>
           </div>
