@@ -26,7 +26,7 @@ export function ClientWizard({ mode, initialClient, onClose, onSubmit }: ClientW
   const [industry, setIndustry] = useState(initialClient?.industry ?? "")
   const [website, setWebsite] = useState(initialClient?.website ?? "")
   const [location, setLocation] = useState(initialClient?.location ?? "")
-  const [owner, setOwner] = useState(initialClient?.owner ?? "")
+  const [owner, setOwner] = useState(initialClient?.owner ?? "Jason Duong")
   const [notes, setNotes] = useState(initialClient?.notes ?? "")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -71,7 +71,7 @@ export function ClientWizard({ mode, initialClient, onClose, onSubmit }: ClientW
         transition={{ duration: 0.2, ease: "easeInOut" }}
         className="flex w-full max-w-xl flex-col overflow-hidden rounded-[24px] bg-background shadow-2xl border border-border"
       >
-        <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-border/60">
+        <div className="flex items-start justify-between px-6 pt-5 pb-4">
           <div>
             <p className="text-base font-semibold text-foreground">
               {isEdit ? "Edit client" : "New client"}
@@ -141,7 +141,7 @@ export function ClientWizard({ mode, initialClient, onClose, onSubmit }: ClientW
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Industry</Label>
               <Input
@@ -160,6 +160,9 @@ export function ClientWizard({ mode, initialClient, onClose, onSubmit }: ClientW
                 className="h-9 text-sm"
               />
             </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Website</Label>
               <Input
@@ -169,27 +172,31 @@ export function ClientWizard({ mode, initialClient, onClose, onSubmit }: ClientW
                 className="h-9 text-sm"
               />
             </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Notes</Label>
-              <Textarea
-                value={notes}
-                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
-                placeholder="Context about this client, expectations, or important details."
-                className="min-h-24 text-sm"
-              />
-            </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Owner (internal)</Label>
-              <Input
-                value={owner}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setOwner(e.target.value)}
-                placeholder="Who is responsible for this client?"
-                className="h-9 text-sm"
-              />
+              <Select value={owner} onValueChange={setOwner}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Select owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Jason Duong">Jason Duong</SelectItem>
+                  <SelectItem value="Alex Chen">Alex Chen</SelectItem>
+                  <SelectItem value="Emma Wright">Emma Wright</SelectItem>
+                  <SelectItem value="Sarah Chen">Sarah Chen</SelectItem>
+                  <SelectItem value="Alex Morgan">Alex Morgan</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Notes</Label>
+            <Textarea
+              value={notes}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
+              placeholder="Context about this client, expectations, or important details."
+              className="min-h-24 text-sm"
+            />
           </div>
         </div>
 
