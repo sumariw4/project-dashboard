@@ -213,8 +213,8 @@ export function ClientsContent() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-auto px-2 pb-2 pt-5">
-        <div className="mx-auto w-full max-w-6xl">
+      <div className="flex-1 overflow-auto px-4 pb-2 pt-5">
+        <div className="w-full">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center border border-dashed border-border/60 rounded-lg bg-muted/30">
               <p className="text-sm font-medium text-foreground">No clients found</p>
@@ -308,11 +308,10 @@ export function ClientsContent() {
                               <span className="truncate">{client.name}</span>
                               <span className="mt-0.5 text-[11px] text-muted-foreground truncate">
                                 {client.industry && client.location
-                                  ? `${client.industry}  b7 ${client.location}`
+                                  ? `${client.industry} • ${client.location}`
                                   : client.industry || client.location || ""}
                               </span>
                             </div>
-                            <CaretRight className="h-3 w-3 text-muted-foreground ml-auto" />
                           </Link>
                         </TableCell>
                         <TableCell className="align-middle text-sm">
