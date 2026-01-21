@@ -19,6 +19,7 @@ import {
 } from "../../ui/command";
 import { Check, X, CornersOut, Star, CalendarBlank, UserCircle, Spinner, List, Paperclip, Microphone, Rows, ChartBar, Tag } from "@phosphor-icons/react/dist/ssr";
 import { ProjectDescriptionEditor } from "../ProjectDescriptionEditor";
+import { clients, type Client } from "@/lib/data/clients";
 
 // --- Mock Data ---
 
@@ -211,6 +212,7 @@ export function StepQuickCreate({
   const [selectedTag, setSelectedTag] = useState<
     (typeof TAGS)[0] | null
   >(null);
+  const [client, setClient] = useState<Client | null>(null);
 
   useEffect(() => {
     // Focus title on mount
@@ -258,6 +260,33 @@ export function StepQuickCreate({
               className="w-full font-normal leading-7 text-foreground placeholder:text-muted-foreground text-xl outline-none bg-transparent border-none p-0"
               autoComplete="off"
             />
+
+          {/* Client Picker */}
+          <GenericPicker
+            items={clients}
+            onSelect={setClient}
+            selectedId={client?.id}
+            placeholder="Assign client..."
+            renderItem={(item, isSelected) => (
+              <div className="flex items-center gap-2 w-full">
+                <span className="flex-1">{item.name}</span>
+                {item.primaryContactName && (
+                  <span className="text-xs text-muted-foreground">
+                    {item.primaryContactName}
+                  </span>
+                )}
+                {isSelected && <Check className="size-4" />}
+              </div>
+            )}
+            trigger={
+              <button className="bg-background flex gap-2 h-9 items-center px-3 py-2 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                <UserCircle className="size-4 text-muted-foreground" />
+                <span className="font-medium text-foreground text-sm leading-5">
+                  {client ? client.name : "Client"}
+                </span>
+              </button>
+            }
+          />
           </div>
         </div>
 

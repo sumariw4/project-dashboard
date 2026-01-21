@@ -8,6 +8,7 @@ import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import { Separator } from "../../ui/separator";
+import { clients } from "@/lib/data/clients";
 import { getAvatarUrl } from "@/lib/assets/avatars";
 
 interface StepOwnershipProps {
@@ -229,6 +230,37 @@ export function StepOwnership({ data, updateData }: StepOwnershipProps) {
       </p>
 
       <div className="space-y-2">
+        {/* Client selection */}
+        <div className="px-3 flex flex-col space-y-2">
+          <Label className="text-sm text-muted-foreground">Client</Label>
+          <Select
+            value={data.clientId ?? "__none"}
+            onValueChange={(val) => {
+              if (val === "__none") {
+                updateData({ clientId: undefined });
+              } else {
+                updateData({ clientId: val });
+              }
+            }}
+          >
+            <SelectTrigger className="h-8 w-full text-xs">
+              <SelectValue placeholder="Select client" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none">
+                <span className="text-xs text-muted-foreground">No client</span>
+              </SelectItem>
+              <SelectSeparator />
+              {clients.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  <span className="text-xs font-medium">{c.name}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Separator />
+
         {/* Add people input + Add button */}
         <div className="space-y-3 bg-background rounded-lg border border-border mx-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

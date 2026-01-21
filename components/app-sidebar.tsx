@@ -54,6 +54,7 @@ export function AppSidebar() {
     if (id === "my-tasks") return "/tasks"
     if (id === "projects") return "/"
     if (id === "inbox") return "/" // placeholder
+    if (id === "clients") return "/clients"
     return "#"
   }
 
@@ -66,6 +67,9 @@ export function AppSidebar() {
     }
     if (id === "inbox") {
       return false
+    }
+    if (id === "clients") {
+      return pathname.startsWith("/clients")
     }
     return false
   }

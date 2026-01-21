@@ -46,4 +46,5 @@ export interface ProjectData {
   stakeholderOwnerships?: OwnershipEntry[];
   structure?: WorkStructure;
   addStarterTasks: boolean;
+  clientId?: string;
 }
