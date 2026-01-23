@@ -193,9 +193,6 @@ export function StepQuickCreate({
   const [startDate, setStartDate] = useState<Date | undefined>(
     new Date(),
   );
-  const [lead, setLead] = useState<(typeof USERS)[0] | null>(
-    null,
-  );
   const [status, setStatus] = useState(STATUSES[1]); // Todo default
   const [sprintType, setSprintType] = useState<
     (typeof SPRINT_TYPES)[0] | null
@@ -260,33 +257,6 @@ export function StepQuickCreate({
               className="w-full font-normal leading-7 text-foreground placeholder:text-muted-foreground text-xl outline-none bg-transparent border-none p-0"
               autoComplete="off"
             />
-
-          {/* Client Picker */}
-          <GenericPicker
-            items={clients}
-            onSelect={setClient}
-            selectedId={client?.id}
-            placeholder="Assign client..."
-            renderItem={(item, isSelected) => (
-              <div className="flex items-center gap-2 w-full">
-                <span className="flex-1">{item.name}</span>
-                {item.primaryContactName && (
-                  <span className="text-xs text-muted-foreground">
-                    {item.primaryContactName}
-                  </span>
-                )}
-                {isSelected && <Check className="size-4" />}
-              </div>
-            )}
-            trigger={
-              <button className="bg-background flex gap-2 h-9 items-center px-3 py-2 rounded-lg border border-border hover:border-primary/50 transition-colors">
-                <UserCircle className="size-4 text-muted-foreground" />
-                <span className="font-medium text-foreground text-sm leading-5">
-                  {client ? client.name : "Client"}
-                </span>
-              </button>
-            }
-          />
           </div>
         </div>
 
@@ -356,12 +326,12 @@ export function StepQuickCreate({
             }
           />
 
-          {/* Lead Picker */}
+          {/* Client Picker */}
           <GenericPicker
-            items={USERS}
-            onSelect={setLead}
-            selectedId={lead?.id}
-            placeholder="Assign lead..."
+            items={clients}
+            onSelect={setClient}
+            selectedId={client?.id}
+            placeholder="Assign client..."
             renderItem={(item, isSelected) => (
               <div className="flex items-center gap-2 w-full">
                 <div className="size-5 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
@@ -375,14 +345,14 @@ export function StepQuickCreate({
               <button
                 className={cn(
                   "flex gap-2 h-9 items-center px-3 py-2 rounded-lg border border-border transition-colors",
-                  lead
+                  client
                     ? "bg-muted"
                     : "bg-background hover:bg-black/5",
                 )}
               >
                 <UserCircle className="size-4 text-muted-foreground" />
                 <span className="font-medium text-foreground text-sm leading-5">
-                  {lead ? lead.name : "Lead"}
+                  {client ? client.name : "Client"}
                 </span>
               </button>
             }
