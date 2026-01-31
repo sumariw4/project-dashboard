@@ -170,7 +170,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
                 showCloseButton
-                className="sm:max-w-5xl w-full p-0 overflow-hidden sm:max-h-[85vh] sm:h-[85vh]"
+                className="sm:max-w-5xl w-full p-0 rounded-3xl overflow-hidden sm:max-h-[85vh] sm:h-[85vh]"
             >
                 <div className="flex h-full flex-col sm:flex-row sm:min-h-0">
                     <aside className="w-full border-b border-border/60 bg-muted/40 px-4 py-4 sm:w-64 sm:border-b-0 sm:border-r">
